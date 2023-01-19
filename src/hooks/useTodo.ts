@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import { useStorage } from './useStorage';
 
 const TABLE_KEY = "todos";
@@ -19,15 +20,17 @@ export enum TodoPriorityEnum {
 export function useTodo() {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const {store} = useStorage();
+  const location = useLocation();
 
   useEffect(() => {
     const init = async () => {
       const todos = await store?.get(TABLE_KEY) || [];
+      console.log('useTodo', todos)
       setTodos(todos)
     };
 
     init();
-  }, [store]);
+  }, [store, location.pathname]);
 
   const addTodo = async (todo: TodoItem) => {
     const newTodos = [...todos];

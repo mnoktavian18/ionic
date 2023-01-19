@@ -18,7 +18,7 @@ import {
   IonItemOption,
   useIonAlert,
 } from "@ionic/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { checkmarkCircle, closeCircle, reorderThreeOutline, trashBin } from "ionicons/icons";
 import { TodoItem, useTodo } from "../../hooks/useTodo";
 import _ from "lodash";

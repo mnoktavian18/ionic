@@ -14,7 +14,6 @@ import {
   IonTitle,
   IonToolbar,
   useIonAlert,
-  useIonRouter,
 } from "@ionic/react";
 import { useState } from "react";
 import { useHistory } from "react-router";
