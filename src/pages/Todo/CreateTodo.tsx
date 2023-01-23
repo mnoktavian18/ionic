@@ -32,12 +32,6 @@ const CreateTodo: React.FC = () => {
     const inputTask = task.current?.value;
     const inputPriority = priority.current?.value;
 
-    loading({
-      message: 'Loading',
-      duration: 500,
-      spinner: 'bubbles'
-    })
-
     if (!inputTask || !inputPriority) {
       await alert({
         header: 'Failed',
@@ -48,6 +42,12 @@ const CreateTodo: React.FC = () => {
 
       return;
     }
+
+    await loading({
+      message: 'Loading',
+      duration: 500,
+      spinner: 'bubbles'
+    })
 
     await addTodo({
       id: new Date().getTime(),

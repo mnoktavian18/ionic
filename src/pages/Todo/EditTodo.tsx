@@ -36,12 +36,6 @@ const EditTodo: React.FC<EditTodoInterface> = ({ match }) => {
     const inputTask = task.current?.value;
     const inputPriority = priority.current?.value;
 
-    loading({
-      message: 'Loading',
-      duration: 500,
-      spinner: 'bubbles'
-    })
-
     if (selectedTodo) {
       if (!inputTask || !inputPriority) {
         await alert({
@@ -53,6 +47,12 @@ const EditTodo: React.FC<EditTodoInterface> = ({ match }) => {
   
         return;
       }
+
+      await loading({
+        message: 'Loading',
+        duration: 500,
+        spinner: 'bubbles'
+      })
   
       await updateTodo({
         id: selectedTodo.id,
