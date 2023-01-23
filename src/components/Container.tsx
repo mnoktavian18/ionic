@@ -1,19 +1,20 @@
 import { App } from "@capacitor/app";
-import { isPlatform, useIonAlert, useIonRouter } from "@ionic/react";
+import { isPlatform, useIonAlert } from "@ionic/react";
 import { useEffect } from "react";
+import { useLocation } from "react-router";
 
 interface ContainerProps {
   children?: React.ReactNode
 }
 
 const Container: React.FC<ContainerProps> = ({ children }) => {
-  const useRouter = useIonRouter();
+  const router = useLocation();
   const [presentAlert] = useIonAlert();
 
   useEffect(() => {
     App.addListener("backButton", () => {
       if (isPlatform("android")) {
-        if (!useRouter.canGoBack()) {
+        if (router.pathname === '/') {
           presentAlert({
             header: "Are you sure you want to leave?",
             backdropDismiss: false,
@@ -41,7 +42,7 @@ const Container: React.FC<ContainerProps> = ({ children }) => {
       App.removeAllListeners();
     };
     
-  }, [presentAlert, useRouter]);
+  }, [presentAlert, router.pathname]);
 
   return (
     <div className="container">
