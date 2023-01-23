@@ -18,7 +18,7 @@ import {
   useIonRouter,
   useIonViewWillEnter,
 } from "@ionic/react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { RouteComponentProps } from "react-router";
 import { TodoItem, TodoPriorityEnum, getTodo, updateTodo } from "./todo";
 
@@ -26,18 +26,15 @@ interface EditTodoInterface extends RouteComponentProps<{todoId: string}> {}
 
 const EditTodo: React.FC<EditTodoInterface> = ({ match }) => {
   const [selectedTodo, setSelectedTodo] = useState<TodoItem>();
-  const task = useRef<HTMLIonTextareaElement>(null);
-  const priority = useRef<HTMLIonSelectElement>(null);
+  const [task, setTask] = useState<string|undefined|null>('');
+  const [priority, setPriority] = useState<TodoPriorityEnum|undefined>(undefined);
   const [alert] = useIonAlert();
   const [loading] = useIonLoading();
   const router = useIonRouter()
 
   async function handleUpdateTodo() {
-    const inputTask = task.current?.value;
-    const inputPriority = priority.current?.value;
-
     if (selectedTodo) {
-      if (!inputTask || !inputPriority) {
+      if (!task || !priority) {
         await alert({
           header: 'Failed',
           message: 'Task or priority cannot be empty',
@@ -56,8 +53,8 @@ const EditTodo: React.FC<EditTodoInterface> = ({ match }) => {
   
       await updateTodo({
         id: selectedTodo.id,
-        priority: inputPriority,
-        task: inputTask,
+        priority: priority,
+        task: task,
         complete: selectedTodo.complete
       })
 
@@ -73,10 +70,8 @@ const EditTodo: React.FC<EditTodoInterface> = ({ match }) => {
       const todo = todos.find((todo) => todo.id.toString() === match.params.todoId)
       if (todo) {
         setSelectedTodo(todo)
-        if (task.current && priority.current) {
-          task.current.value = todo.task
-          priority.current.value = todo.priority
-        }
+        setTask(todo.task)
+        setPriority(todo.priority)
       }
     }
 
@@ -104,14 +99,16 @@ const EditTodo: React.FC<EditTodoInterface> = ({ match }) => {
                 autoGrow={true}
                 placeholder="Add task here"
                 required={true}
-                ref={task}
+                onIonChange={(e) => setTask(e.target.value)}
+                value={task}
               ></IonTextarea>
             </IonItem>
             <IonItem>
               <IonLabel position="fixed">Priority</IonLabel>
               <IonSelect
                 placeholder="Priority"
-                ref={priority}
+                value={priority}
+                onIonChange={(e) => setPriority(e.target.value)}
               >
                 <IonSelectOption value={TodoPriorityEnum.normal}>Normal</IonSelectOption>
                 <IonSelectOption value={TodoPriorityEnum.high}>High</IonSelectOption>
@@ -120,7 +117,7 @@ const EditTodo: React.FC<EditTodoInterface> = ({ match }) => {
             </IonItem>
           </IonList>
           <div className="ion-margin-vertical">
-            <IonButton expand="block" onClick={handleUpdateTodo} disabled={!task}>Update</IonButton>
+            <IonButton expand="block" onClick={handleUpdateTodo} disabled={task === ''|| !priority === null}>Update</IonButton>
           </div>
         </form>
       </IonContent>

@@ -17,22 +17,19 @@ import {
   useIonLoading,
   useIonViewWillEnter,
 } from "@ionic/react";
-import { useRef } from "react";
+import { useState } from "react";
 import { useHistory } from "react-router";
 import { TodoPriorityEnum, addTodo } from "./todo";
 
 const CreateTodo: React.FC = () => {
-  const task = useRef<HTMLIonTextareaElement>(null)
-  const priority = useRef<HTMLIonSelectElement>(null)
+  const [task, setTask] = useState<string | null | undefined>('');
+  const [priority, setPriority] = useState<TodoPriorityEnum|undefined>(undefined)
   const [alert] = useIonAlert();
   const [loading] = useIonLoading();
   const router = useHistory()
 
   async function handleAddTodo() {
-    const inputTask = task.current?.value;
-    const inputPriority = priority.current?.value;
-
-    if (!inputTask || !inputPriority) {
+    if (!task || !priority) {
       await alert({
         header: 'Failed',
         message: 'Task or priority cannot be empty',
@@ -51,8 +48,8 @@ const CreateTodo: React.FC = () => {
 
     await addTodo({
       id: new Date().getTime(),
-      priority: inputPriority,
-      task: inputTask,
+      priority: priority,
+      task: task,
       complete: false
     })
 
@@ -62,10 +59,8 @@ const CreateTodo: React.FC = () => {
   }
 
   useIonViewWillEnter(() => {
-    if (task.current && priority.current) {
-      task.current.value = ''
-      priority.current.value = null
-    }
+    setTask('')
+    setPriority(undefined)
   }, [])
 
   return (
@@ -76,7 +71,7 @@ const CreateTodo: React.FC = () => {
             <IonBackButton defaultHref="/" />
           </IonButtons>
           <IonTitle>
-            Add Todo
+            Add Todo Test
           </IonTitle>
         </IonToolbar>
       </IonHeader>
@@ -89,14 +84,16 @@ const CreateTodo: React.FC = () => {
                 autoGrow={true}
                 placeholder="Add task here"
                 required={true}
-                ref={task}
+                value={task}
+                onIonChange={e => setTask(e.target.value)}
               ></IonTextarea>
             </IonItem>
             <IonItem>
               <IonLabel position="fixed">Priority</IonLabel>
               <IonSelect
                 placeholder="Priority"
-                ref={priority}
+                value={priority}
+                onIonChange={e => setPriority(e.target.value)}
               >
                 <IonSelectOption value={TodoPriorityEnum.normal}>Normal</IonSelectOption>
                 <IonSelectOption value={TodoPriorityEnum.high}>High</IonSelectOption>
@@ -105,7 +102,7 @@ const CreateTodo: React.FC = () => {
             </IonItem>
           </IonList>
           <div className="ion-margin-vertical">
-            <IonButton expand="block" onClick={handleAddTodo} disabled={!task}>Add</IonButton>
+            <IonButton expand="block" onClick={handleAddTodo} disabled={task === '' || priority === undefined}>Add</IonButton>
           </div>
         </form>
       </IonContent>

@@ -15,25 +15,29 @@ const Container: React.FC<ContainerProps> = ({ children }) => {
     App.addListener("backButton", () => {
       if (isPlatform("android")) {
         if (router.pathname === '/') {
-          presentAlert({
-            header: "Are you sure you want to leave?",
-            backdropDismiss: false,
-            buttons: [
-              {
-                text: "Cancel",
-                role: "cancel",
+          const alert = async () => {
+            await presentAlert({
+              header: "Are you sure you want to leave?",
+              backdropDismiss: false,
+              buttons: [
+                {
+                  text: "Cancel",
+                  role: "cancel",
+                },
+                {
+                  text: "Leave",
+                  role: "leave",
+                },
+              ],
+              onDidDismiss: (e: CustomEvent) => {
+                if (e.detail.role === "leave") {
+                  App.exitApp();
+                }
               },
-              {
-                text: "Leave",
-                role: "leave",
-              },
-            ],
-            onDidDismiss: (e: CustomEvent) => {
-              if (e.detail.role === "leave") {
-                App.exitApp();
-              }
-            },
-          });
+            });
+          } 
+
+          alert();
         }
       }
     });
