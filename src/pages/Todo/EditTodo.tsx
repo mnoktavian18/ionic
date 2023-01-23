@@ -13,27 +13,40 @@ import {
   IonTextarea,
   IonTitle,
   IonToolbar,
+  useIonAlert,
+  useIonLoading,
   useIonRouter,
+  useIonViewWillEnter,
 } from "@ionic/react";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { RouteComponentProps } from "react-router";
-import { TodoItem, TodoPriorityEnum, useTodo } from "../../hooks/useTodo";
+import { TodoItem, TodoPriorityEnum, getTodo, updateTodo } from "./todo";
 
 interface EditTodoInterface extends RouteComponentProps<{todoId: string}> {}
 
 const EditTodo: React.FC<EditTodoInterface> = ({ match }) => {
-  const { todos, updateTodo } = useTodo();
   const [selectedTodo, setSelectedTodo] = useState<TodoItem>();
-  const [priority, setPriority] = useState<TodoPriorityEnum>(TodoPriorityEnum.normal);
-  const [task, setTask] = useState<string | null | undefined>("");
+  const task = useRef<HTMLIonTextareaElement>(null);
+  const priority = useRef<HTMLIonSelectElement>(null);
+  const [alert] = useIonAlert();
+  const [loading] = useIonLoading();
   const router = useIonRouter()
 
   async function handleUpdateTodo() {
+    const inputTask = task.current?.value;
+    const inputPriority = priority.current?.value;
+
+    loading({
+      message: 'Loading',
+      duration: 500,
+      spinner: 'bubbles'
+    })
+
     if (selectedTodo) {
-      if (!task) {
-        alert({
+      if (!inputTask || !inputPriority) {
+        await alert({
           header: 'Failed',
-          message: 'Task cannot be empty',
+          message: 'Task or priority cannot be empty',
           backdropDismiss: false,
           buttons: ['OK']
         })
@@ -43,23 +56,32 @@ const EditTodo: React.FC<EditTodoInterface> = ({ match }) => {
   
       await updateTodo({
         id: selectedTodo.id,
-        priority: priority,
-        task: task,
+        priority: inputPriority,
+        task: inputTask,
         complete: selectedTodo.complete
       })
 
-      router.push('/')
+      setTimeout(() => {
+        router.push('/')
+      }, 500)
     }
   }
 
-  useEffect(() => {
-    const todo = todos.find((todo) => todo.id.toString() === match.params.todoId)
-    if (todo) {
-      setSelectedTodo(todo)
-      setTask(todo.task)
-      setPriority(todo.priority)
+  useIonViewWillEnter(() => {
+    const init = async () => {
+      const todos = await getTodo()
+      const todo = todos.find((todo) => todo.id.toString() === match.params.todoId)
+      if (todo) {
+        setSelectedTodo(todo)
+        if (task.current && priority.current) {
+          task.current.value = todo.task
+          priority.current.value = todo.priority
+        }
+      }
     }
-  }, [match.params.todoId, todos])
+
+    init()
+  }, [match.params.todoId])
 
   return (
     <IonPage>
@@ -74,33 +96,33 @@ const EditTodo: React.FC<EditTodoInterface> = ({ match }) => {
         </IonToolbar>
       </IonHeader>
       <IonContent className="ion-padding">
-        <IonList className="ion-margin-bottom">
-          <IonItem>
-            <IonLabel position="fixed">Task</IonLabel>
-            <IonTextarea
-              autoGrow={true}
-              placeholder="Add task here"
-              required={true}
-              value={task}
-              onIonChange={(e) => setTask(e.target.value)}
-            ></IonTextarea>
-          </IonItem>
-          <IonItem>
-            <IonLabel position="fixed">Priority</IonLabel>
-            <IonSelect
-              placeholder="Priority"
-              value={priority}
-              onIonChange={(e) => setPriority(e.target.value)}
-            >
-              <IonSelectOption value={TodoPriorityEnum.normal}>Normal</IonSelectOption>
-              <IonSelectOption value={TodoPriorityEnum.high}>High</IonSelectOption>
-              <IonSelectOption value={TodoPriorityEnum.urgent}>Urgent</IonSelectOption>
-            </IonSelect>
-          </IonItem>
-        </IonList>
-        <div className="ion-margin-vertical">
-          <IonButton expand="block" onClick={handleUpdateTodo} disabled={!task}>Update</IonButton>
-        </div>
+        <form onSubmit={handleUpdateTodo}>
+          <IonList className="ion-margin-bottom">
+            <IonItem>
+              <IonLabel position="fixed">Task</IonLabel>
+              <IonTextarea
+                autoGrow={true}
+                placeholder="Add task here"
+                required={true}
+                ref={task}
+              ></IonTextarea>
+            </IonItem>
+            <IonItem>
+              <IonLabel position="fixed">Priority</IonLabel>
+              <IonSelect
+                placeholder="Priority"
+                ref={priority}
+              >
+                <IonSelectOption value={TodoPriorityEnum.normal}>Normal</IonSelectOption>
+                <IonSelectOption value={TodoPriorityEnum.high}>High</IonSelectOption>
+                <IonSelectOption value={TodoPriorityEnum.urgent}>Urgent</IonSelectOption>
+              </IonSelect>
+            </IonItem>
+          </IonList>
+          <div className="ion-margin-vertical">
+            <IonButton expand="block" onClick={handleUpdateTodo} disabled={!task}>Update</IonButton>
+          </div>
+        </form>
       </IonContent>
     </IonPage>
   );

@@ -7,7 +7,7 @@ import {
 import { IonReactRouter } from '@ionic/react-router';
 import CreateTodo from './pages/Todo/CreateTodo';
 import EditTodo from './pages/Todo/EditTodo';
-import Todo from './pages/Todo/Todo';
+import ListTodo from './pages/Todo/ListTodo';
 
 
 /* Core CSS required for Ionic components to work properly */
@@ -36,7 +36,7 @@ const App: React.FC = () => {
     <IonApp>
       <IonReactRouter>
         <IonRouterOutlet>
-          <Route exact path="/" component={Todo}/>
+          <Route exact path="/" component={ListTodo}/>
 			    <Route exact path="/edit/:todoId" component={EditTodo}/>
 			    <Route exact path="/create" component={CreateTodo}/>
         </IonRouterOutlet>

@@ -17,36 +17,49 @@ import {
   IonItemOptions,
   IonItemOption,
   useIonAlert,
+  useIonViewWillEnter,
 } from "@ionic/react";
-import { useState } from "react";
 import { checkmarkCircle, closeCircle, reorderThreeOutline, trashBin } from "ionicons/icons";
-import { TodoItem, useTodo } from "../../hooks/useTodo";
-import _ from "lodash";
-import Container from "../../components/Container";
+import { TodoItem, getTodo, orderTodo, completeTodo, deleteTodo } from "./todo";
 import { IonItemSlidingCustomEvent } from "@ionic/core";
+import { useState } from "react";
+import Container from "../../components/Container";
+import _ from "lodash";
 
-const Todo: React.FC = () => {
-  const { todos, orderTodo, completeTodo, deleteTodo } = useTodo();
+const ListTodo: React.FC = () => {
+  const [todos, setTodos] = useState<TodoItem[]>([])
   const [disabledOrder, setDisabledOrder] = useState<boolean | undefined>(true);
   const [alert] = useIonAlert()
   const groupTodos = _.groupBy(todos, (todos) => todos.priority);
 
+  const fetch = async () => {
+    const todos = await getTodo()
+    setTodos(todos)
+  }
+
+  useIonViewWillEnter(() => {
+    const init = async () => {
+      await fetch()
+    }
+
+    init()
+  }, []);
+  
   async function handleReorder(e: CustomEvent<ItemReorderEventDetail>, groupTodos: TodoItem[]) {
     const order = e.detail.complete(groupTodos);
-    await orderTodo(order)
+    const todos = await orderTodo(order)
+    setTodos(todos)
   }
 
   async function handleComplete(e: IonItemSlidingCustomEvent<any>, todoId: Number) {
     if (e.detail.ratio === 1) {
-      e.target.closeOpened()
-    
-      setTimeout(() => {
-        completeTodo(todoId)
+      setTimeout(async () => {
+        const todos = await completeTodo(todoId)
+        setTodos(todos)
       }, 400);
+      
     } else if (e.detail.ratio === -1) {
-      e.target.closeOpened()
-
-      alert({
+      await alert({
         header: 'Alert!',
         message: 'Are you sure?',
         backdropDismiss: false,
@@ -58,12 +71,18 @@ const Todo: React.FC = () => {
           {
             text: 'Delete',
             role: 'Delete',
-            handler: () => {
-              deleteTodo(todoId)
+            handler: async () => {
+              await deleteTodo(todoId)
+              const todos = await completeTodo(todoId)
+              setTodos(todos)
             }
           }
         ]
       })
+    }
+
+    if (e.detail.ratio === -1 || e.detail.ratio === 1) {
+      e.target.closeOpened()
     }
   }
 
@@ -130,7 +149,7 @@ const Todo: React.FC = () => {
                     disabled={disabledOrder}
                     onIonItemReorder={(e) => handleReorder(e, item[1])}
                   >
-                    {item[1].map((todo: TodoItem) => {
+                    {item[1].map((todo: TodoItem, index: number) => {
                       return (
                         <IonItemSliding key={''+todo.id} onIonDrag={(e) => handleComplete(e, todo.id)}>
                           <IonItem
@@ -145,7 +164,7 @@ const Todo: React.FC = () => {
                                   : "none",
                               }}
                             >
-                              {todo.task}
+                              {(index+1) + '. ' + todo.task}
                             </IonLabel>
                             {todo.complete ? (
                               <IonIcon
@@ -191,4 +210,4 @@ const Todo: React.FC = () => {
   );
 };
 
-export default Todo;
+export default ListTodo;

@@ -14,23 +14,34 @@ import {
   IonTitle,
   IonToolbar,
   useIonAlert,
+  useIonLoading,
+  useIonViewWillEnter,
 } from "@ionic/react";
-import { useState } from "react";
+import { useRef } from "react";
 import { useHistory } from "react-router";
-import { TodoPriorityEnum, useTodo } from "../../hooks/useTodo";
+import { TodoPriorityEnum, addTodo } from "./todo";
 
 const CreateTodo: React.FC = () => {
-  const { addTodo } = useTodo();
-  const [priority, setPriority] = useState<TodoPriorityEnum>(TodoPriorityEnum.normal);
-  const [task, setTask] = useState<string | null | undefined>('');
+  const task = useRef<HTMLIonTextareaElement>(null)
+  const priority = useRef<HTMLIonSelectElement>(null)
   const [alert] = useIonAlert();
+  const [loading] = useIonLoading();
   const router = useHistory()
 
-  function handleAddTodo() {
-    if (!task) {
-      alert({
+  async function handleAddTodo() {
+    const inputTask = task.current?.value;
+    const inputPriority = priority.current?.value;
+
+    loading({
+      message: 'Loading',
+      duration: 500,
+      spinner: 'bubbles'
+    })
+
+    if (!inputTask || !inputPriority) {
+      await alert({
         header: 'Failed',
-        message: 'Task cannot be empty',
+        message: 'Task or priority cannot be empty',
         backdropDismiss: false,
         buttons: ['OK']
       })
@@ -38,15 +49,24 @@ const CreateTodo: React.FC = () => {
       return;
     }
 
-    addTodo({
+    await addTodo({
       id: new Date().getTime(),
-      priority: priority,
-      task: task,
+      priority: inputPriority,
+      task: inputTask,
       complete: false
     })
 
-    router.push('/')
+    setTimeout(() => {
+      router.push('/')
+    }, 500) 
   }
+
+  useIonViewWillEnter(() => {
+    if (task.current && priority.current) {
+      task.current.value = ''
+      priority.current.value = null
+    }
+  }, [])
 
   return (
     <IonPage>
@@ -61,33 +81,33 @@ const CreateTodo: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent className="ion-padding">
-        <IonList className="ion-margin-bottom">
-          <IonItem>
-            <IonLabel position="fixed">Task</IonLabel>
-            <IonTextarea
-              autoGrow={true}
-              placeholder="Add task here"
-              required={true}
-              value={task}
-              onIonChange={(e) => setTask(e.target.value)}
-            ></IonTextarea>
-          </IonItem>
-          <IonItem>
-            <IonLabel position="fixed">Priority</IonLabel>
-            <IonSelect
-              placeholder="Priority"
-              value={priority}
-              onIonChange={(e) => setPriority(e.target.value)}
-            >
-              <IonSelectOption value={TodoPriorityEnum.normal}>Normal</IonSelectOption>
-              <IonSelectOption value={TodoPriorityEnum.high}>High</IonSelectOption>
-              <IonSelectOption value={TodoPriorityEnum.urgent}>Urgent</IonSelectOption>
-            </IonSelect>
-          </IonItem>
-        </IonList>
-        <div className="ion-margin-vertical">
-          <IonButton expand="block" onClick={handleAddTodo} disabled={!task}>Add</IonButton>
-        </div>
+        <form onSubmit={handleAddTodo}>
+          <IonList className="ion-margin-bottom">
+            <IonItem>
+              <IonLabel position="fixed">Task</IonLabel>
+              <IonTextarea
+                autoGrow={true}
+                placeholder="Add task here"
+                required={true}
+                ref={task}
+              ></IonTextarea>
+            </IonItem>
+            <IonItem>
+              <IonLabel position="fixed">Priority</IonLabel>
+              <IonSelect
+                placeholder="Priority"
+                ref={priority}
+              >
+                <IonSelectOption value={TodoPriorityEnum.normal}>Normal</IonSelectOption>
+                <IonSelectOption value={TodoPriorityEnum.high}>High</IonSelectOption>
+                <IonSelectOption value={TodoPriorityEnum.urgent}>Urgent</IonSelectOption>
+              </IonSelect>
+            </IonItem>
+          </IonList>
+          <div className="ion-margin-vertical">
+            <IonButton expand="block" onClick={handleAddTodo} disabled={!task}>Add</IonButton>
+          </div>
+        </form>
       </IonContent>
     </IonPage>
   );
